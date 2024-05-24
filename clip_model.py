@@ -107,17 +107,23 @@ class ImageSearcher:
     :return: List of Base64-encoded strings of the top-k relevant images.
     """
     def search(self, description, image_folder, top_k=5):
+        
+        # processing photo album
         image_paths = self.get_image_paths(image_folder)
         images = self.preprocess_images(image_paths)
+        
+        # embeddings & similarity calculation
         text_features = self.encode_text(description)
         image_features = self.encode_images(images)
         similarity = self.compute_similarity(text_features, image_features)
+        
+        # finding relevant photos
         top_images = self.find_top(similarity, image_paths, top_k=top_k)
         return self.convert_images(top_images)
 
 
     """
-    Converts a list of image paths to Base64-encoded strings for easy transmission over the web.
+    Converts a list of image paths to Base64-encoded strings for easy transmission to frontend.
     
     :param image_paths: List of image paths to convert.
     :return: List of Base64-encoded strings representing the images.
