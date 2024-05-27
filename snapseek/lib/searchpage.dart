@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
+
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -22,6 +24,8 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
+  var logger = Logger();
+
   Future<void> searchImages(String description) async {
     try {
       final response = await http.post(
@@ -33,13 +37,10 @@ class _SearchPageState extends State<SearchPage> {
           'description': description,
         })
       );
-      // ignore: avoid_print
-      print('Response status: ${response.statusCode}');
-      // ignore: avoid_print
-      print('Response status: ${response.body}');
+      logger.i('Response status: ${response.statusCode}');
     } catch(e) {
       // ignore: avoid_print
-      print('Error: $e');
+      logger.e('Error: $e');
     }
   }
 
@@ -53,7 +54,7 @@ class _SearchPageState extends State<SearchPage> {
         ),
       body: Column(
         children: <Widget>[
-          SearchBar(changeText),
+          SearchBar(onSearch: searchImages, onChange: changeText),
         ]),
       bottomNavigationBar: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 80.0, vertical: 20),
@@ -73,8 +74,9 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class SearchBar extends StatefulWidget {
-  final Function(String) callback;
-  const SearchBar(this.callback, {super.key});
+  final Function(String) onSearch;
+  final Function(String) onChange;
+  const SearchBar({required this.onSearch, required this.onChange, super.key});
 
   @override
   State<SearchBar> createState() => _SearchBarState();
@@ -89,10 +91,11 @@ class _SearchBarState extends State<SearchBar> {
     controller.dispose();
   }
 
-  void click(String text) {
-    widget.callback(text);
+  void click() {
+    String text = controller.text;
+    widget.onSearch(text);
+    widget.onChange(text);
     controller.clear();
-    _SearchPageState().searchImages(text);
   }
 
   @override
@@ -104,7 +107,7 @@ class _SearchBarState extends State<SearchBar> {
             Expanded(
               child: CupertinoSearchTextField(
                 controller: controller,
-                onSubmitted: (_) => click(controller.text),
+                onSubmitted: (_) => click(),
               )
             )
           ]
