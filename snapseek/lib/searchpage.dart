@@ -15,7 +15,6 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   String search = "";
-  String x = 'x';
 
   void changeText(String text) {
     setState(() {
@@ -34,14 +33,13 @@ class _SearchPageState extends State<SearchPage> {
           'description': description,
         })
       );
-
-      if (response.statusCode == 200) {
-        x = 'successful';
-      } else {
-        x = 'error';
-      }
+      // ignore: avoid_print
+      print('Response status: ${response.statusCode}');
+      // ignore: avoid_print
+      print('Response status: ${response.body}');
     } catch(e) {
-      x = '$e';
+      // ignore: avoid_print
+      print('Error: $e');
     }
   }
 
@@ -84,7 +82,6 @@ class SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<SearchBar> {
   final controller = TextEditingController();
-  final _SearchPageState _searchPageState = _SearchPageState();
 
   @override
   void dispose() {
@@ -95,7 +92,7 @@ class _SearchBarState extends State<SearchBar> {
   void click(String text) {
     widget.callback(text);
     controller.clear();
-    _searchPageState.searchImages(text);
+    _SearchPageState().searchImages(text);
   }
 
   @override
@@ -109,8 +106,7 @@ class _SearchBarState extends State<SearchBar> {
                 controller: controller,
                 onSubmitted: (_) => click(controller.text),
               )
-            ),
-            Text(_searchPageState.x)
+            )
           ]
         )
     );
