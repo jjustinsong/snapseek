@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:snapseek/searchpage.dart';
-import 'package:snapseek/login.dart';
+import 'package:snapseek/pages/searchpage.dart';
+import 'package:snapseek/pages/login.dart';
 
 void main() {
   runApp(const SnapSeek());
@@ -20,7 +20,7 @@ class SnapSeek extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const Login(),
+      home: SignUpPage(),
     );
   }
 }

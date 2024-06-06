@@ -44,6 +44,10 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  void buttonHandler() {
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
