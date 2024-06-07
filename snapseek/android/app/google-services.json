@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "119430690777",
+    "project_id": "snapseek-cf1e8",
+    "storage_bucket": "snapseek-cf1e8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:119430690777:android:2fb583200eabd550e64bc8",
+        "android_client_info": {
+          "package_name": "com.example.snapseek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6FIjy5DqtS5EPZwuS9PsFNcXv47PKk6k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

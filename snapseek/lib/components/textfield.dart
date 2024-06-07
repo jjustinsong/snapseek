@@ -15,7 +15,7 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0, left: 25, right: 25),
+      padding: const EdgeInsets.only(bottom: 20.0),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
@@ -24,8 +24,9 @@ class CustomTextField extends StatelessWidget {
             borderSide: const BorderSide(color: Color.fromARGB(255, 192, 192, 192)),
             borderRadius: BorderRadius.circular(20.0),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Color.fromARGB(255, 180, 180, 180))
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color.fromARGB(255, 180, 180, 180)),
+            borderRadius: BorderRadius.circular(20.0),
           ),
           fillColor: Colors.white,
           filled: true,
