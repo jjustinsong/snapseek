@@ -4,21 +4,21 @@ import 'package:snapseek/components/button.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:snapseek/components/tile.dart';
 
-class Login extends StatefulWidget {
+class Register extends StatefulWidget {
 
   final Function()? onTap;
-  const Login({super.key, required this.onTap});
+  const Register({super.key, required this.onTap});
 
   @override
-  State<Login> createState() => _LoginState();
+  State<Register> createState() => _RegisterState();
 }
 
-class _LoginState extends State<Login> {
+class _RegisterState extends State<Register> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   String errorMessage = '';
 
-  void signIn() async {
+  void signUp() async {
     setState(() {
       errorMessage = '';
     });
@@ -58,6 +58,7 @@ class _LoginState extends State<Login> {
                     padding: EdgeInsets.only(top: 100.0, bottom: 40.0),
                     child: Text("SnapSeek", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25))
                   ),
+                  const Text('Create an account', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
                   CustomTextField(
                     controller: emailController,
                     hintText: 'Email address',
@@ -68,15 +69,15 @@ class _LoginState extends State<Login> {
                     hintText: 'Password',
                     obscureText: true,
                   ),
-                  const SizedBox(height: 10.0),
-                  if (errorMessage.isNotEmpty)
-                  Text(errorMessage, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 10.0),
-                  const Text('Forgot password?', style: TextStyle(color: Color.fromARGB(255, 99, 98, 98))),
+                  CustomTextField(
+                    controller: passwordController,
+                    hintText: 'Confirm password',
+                    obscureText: true,
+                  ),
                   const SizedBox(height: 20.0),
                   CustomButton(
-                    onTap: signIn,
-                    name: 'Sign in'
+                    onTap: signUp,
+                    name: 'Sign up'
                   ),
                   const SizedBox(height: 20.0),
                   Row(
@@ -106,14 +107,14 @@ class _LoginState extends State<Login> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Don't have an account yet?",
+                        "Already have an account?",
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: widget.onTap,
                         child: const Text(
-                          'Sign up',
+                          'Sign in',
                           style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)
                         ),
                       )

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
@@ -25,6 +26,10 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   var logger = Logger();
+
+  void signUserOut() {
+    FirebaseAuth.instance.signOut();
+  }
 
   Future<void> searchImages(String description) async {
     try {
@@ -60,19 +65,25 @@ class _SearchPageState extends State<SearchPage> {
         children: <Widget>[
           SearchBar(onSearch: searchImages, onChange: changeText),
         ]),
-      bottomNavigationBar: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 80.0, vertical: 20),
-        child: GNav(
-          color: Colors.black,
-          activeColor: Colors.black,
-          gap: 8,
-          padding: EdgeInsets.all(16),
-          tabs: [
-            GButton(icon: LineIcons.globe),
-            GButton(icon: LineIcons.search),
-            GButton(icon: LineIcons.user),
-          ]
-        )),
+      bottomNavigationBar: Row(
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 80.0, vertical: 20),
+            child: GNav(
+              color: Colors.black,
+              activeColor: Colors.black,
+              gap: 8,
+              padding: EdgeInsets.all(16),
+              tabs: [
+                GButton(icon: LineIcons.globe),
+                GButton(icon: LineIcons.search),
+                GButton(icon: LineIcons.user),
+              ]
+            )
+          ),
+          IconButton(onPressed: signUserOut, icon: const Icon(Icons.logout))
+        ],
+      ),
     );
   }  
 }

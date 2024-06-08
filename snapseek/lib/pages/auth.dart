@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:snapseek/pages/login.dart';
+import 'package:snapseek/pages/login_or_register.dart';
 import 'package:snapseek/pages/search.dart';
 
 class Auth extends StatelessWidget {
@@ -16,7 +17,7 @@ class Auth extends StatelessWidget {
             return const SearchPage();
           }
           else {
-            return Login();
+            return LoginOrRegister();
           }
         }
       ),
