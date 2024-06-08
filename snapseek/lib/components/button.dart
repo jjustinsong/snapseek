@@ -3,8 +3,9 @@ import "package:flutter/material.dart";
 class CustomButton extends StatelessWidget {
 
   final Function()? onTap;
+  final String name;
 
-  const CustomButton({super.key, required this.onTap});
+  const CustomButton({super.key, required this.onTap, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -16,10 +17,10 @@ class CustomButton extends StatelessWidget {
           color: Colors.black,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            "Sign up",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            name,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
         )
       ),
