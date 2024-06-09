@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
+//custom text field widget so that code in login.dart and register.dart files are cleaner
+
 class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String hintText;
   final bool obscureText;
   
+  //controllers used to track what is typed in textfields
+  //hinttext is what shows in the textbox before you type anything
+  //obscure text for passwords so that it isn't shown when typing
+
   const CustomTextField({
     super.key, 
     required this.controller,

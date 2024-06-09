@@ -4,6 +4,8 @@ import 'package:snapseek/pages/login.dart';
 import 'package:snapseek/pages/login_or_register.dart';
 import 'package:snapseek/pages/search.dart';
 
+//determines which page to actually show on app launch; if logged in: search page, if logged out: login or register page
+
 class Auth extends StatelessWidget {
   const Auth({super.key});
 

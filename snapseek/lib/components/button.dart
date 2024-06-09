@@ -5,10 +5,13 @@ class CustomButton extends StatelessWidget {
   final Function()? onTap;
   final String name;
 
+  //pass in name variable to use as the button's label
+
   const CustomButton({super.key, required this.onTap, required this.name});
 
   @override
   Widget build(BuildContext context) {
+    //gesture detector to turn container into a button, easier to format containers
     return GestureDetector(
       onTap: onTap,
       child: Container(

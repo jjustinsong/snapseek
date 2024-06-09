@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snapseek/components/button.dart';
 import 'package:snapseek/components/textfield.dart';
-import 'package:snapseek/components/tile.dart';
+import 'package:snapseek/components/google_button.dart';
+
+//stateful because we want to show errors on screen for when password and confirm password are different
 
 class Register extends StatefulWidget {
 
@@ -16,27 +18,32 @@ class Register extends StatefulWidget {
 class _RegisterState extends State<Register> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   String errorMessage = '';
 
   void signUp() async {
-    setState(() {
-      errorMessage = '';
-    });
     showDialog(context: context, builder: (context) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     });
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
-      );
+      //only create user if password and confirmpassword are the same
+      if (passwordController.text == confirmPasswordController.text) {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: emailController.text,
+          password: passwordController.text,
+        );
+      } else {
+        setState(() {
+          errorMessage = "Passwords don't match";
+        });
+      }
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);
       setState(() {
-        errorMessage = 'Incorrect email/password';
+        errorMessage = "Passwords don't match";
       });
     }
   }
@@ -70,11 +77,14 @@ class _RegisterState extends State<Register> {
                     obscureText: true,
                   ),
                   CustomTextField(
-                    controller: passwordController,
+                    controller: confirmPasswordController,
                     hintText: 'Confirm password',
                     obscureText: true,
                   ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 10.0),
+                  if (errorMessage.isNotEmpty)
+                  Text(errorMessage, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 10.0),
                   CustomButton(
                     onTap: signUp,
                     name: 'Sign up'
@@ -101,7 +111,7 @@ class _RegisterState extends State<Register> {
                     ]
                   ),
                   const SizedBox(height: 20.0),
-                  const Tile(imagePath: 'lib/images/google logo.png'),
+                  const GoogleButton(imagePath: 'lib/images/google logo.png'),
                   const SizedBox(height: 20.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -112,6 +122,8 @@ class _RegisterState extends State<Register> {
                       ),
                       const SizedBox(width: 4),
                       GestureDetector(
+                        //onTap passed in from login_or_register.dart file
+                        //to call variables from the stateful class, use 'widget._____'
                         onTap: widget.onTap,
                         child: const Text(
                           'Sign in',

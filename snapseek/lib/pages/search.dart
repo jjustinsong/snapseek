@@ -17,6 +17,7 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  //variable to keep track of text that is being typed in the search bar
   String search = "";
 
   void changeText(String text) {
@@ -27,10 +28,12 @@ class _SearchPageState extends State<SearchPage> {
 
   var logger = Logger();
 
+  //firebase sign out
   void signUserOut() {
     FirebaseAuth.instance.signOut();
   }
 
+  //api call; doesn't work
   Future<void> searchImages(String description) async {
     try {
       final response = await http.post(
@@ -89,6 +92,9 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class SearchBar extends StatefulWidget {
+  //parameters for widget constructor
+  //onSearch for post request
+  //onChange to actively show what is being typed on the search bar
   final Function(String) onSearch;
   final Function(String) onChange;
   const SearchBar({required this.onSearch, required this.onChange, super.key});
@@ -122,6 +128,7 @@ class _SearchBarState extends State<SearchBar> {
             Expanded(
               child: CupertinoSearchTextField(
                 controller: controller,
+                //executes when keyboard 'return' or 'search' button is clicked
                 onSubmitted: (_) => click(),
               )
             )

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-class Tile extends StatelessWidget {
+//custom google sign in button widget so that code in login.dart and register.dart files are cleaner
+
+class GoogleButton extends StatelessWidget {
   final String imagePath;
-  const Tile({super.key, required this.imagePath});
+  const GoogleButton({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +19,7 @@ class Tile extends StatelessWidget {
         ),
         child: Center(
           child: Row(
+            //centers items in the row
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Padding(
