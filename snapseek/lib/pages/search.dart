@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:snapseek/pages/gallery.dart';
 import 'package:snapseek/pages/profile.dart';
 
 class SearchPage extends StatefulWidget {
@@ -28,11 +30,6 @@ class _SearchPageState extends State<SearchPage> {
 
   var logger = Logger();
 
-  //firebase sign out
-  void signUserOut() {
-    FirebaseAuth.instance.signOut();
-  }
-
   //api call; doesn't work
   Future<void> searchImages(String description) async {
     try {
@@ -50,8 +47,6 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  void buttonHandler() {}
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,16 +57,11 @@ class _SearchPageState extends State<SearchPage> {
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(2.0),
             child: Container(color: Colors.black, height: 0.5)),
-        actions: [
-          IconButton(
-            onPressed: signUserOut,
-            icon: const Icon(Icons.logout),
-            color: Colors.black,
-          ),
-        ],
       ),
       body: Column(children: <Widget>[
         SearchBar(onSearch: searchImages, onChange: changeText),
+        const SizedBox(height: 20.0),
+        const Gallery(),
       ]),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),

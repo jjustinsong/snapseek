@@ -19,6 +19,11 @@ class _ProfilePageState extends State<ProfilePage> {
     fetchUsername();
   }
 
+  //firebase sign out
+  void signUserOut() {
+    FirebaseAuth.instance.signOut();
+  }
+  
   Future<void> fetchUsername() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -46,7 +51,14 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        actions: [
+          IconButton(
+            onPressed: signUserOut,
+            icon: const Icon(Icons.logout),
+            color: Colors.black,
+          ),
+        ]
       ),
       body: Column(
         children: <Widget>[
