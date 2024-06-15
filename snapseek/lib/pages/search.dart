@@ -30,19 +30,21 @@ class _SearchPageState extends State<SearchPage> {
 
   var logger = Logger();
 
-  //api call; doesn't work
-  Future<void> searchImages(String description) async {
+  Future<void> searchImages(String description, int numImages) async {
     try {
-      final response = await http.post(Uri.parse('http://10.0.2.2:5000/search'),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode(<String, dynamic>{
-            'description': description,
-          }));
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/search'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'description': description,
+          'numImages': numImages, // Pass the number of images to your backend
+        }),
+      );
       logger.i('Response status: ${response.statusCode}');
+      // Handle the response if needed
     } catch (e) {
-      // ignore: avoid_print
       logger.e('Error: $e');
     }
   }
@@ -95,12 +97,14 @@ class _SearchPageState extends State<SearchPage> {
 }
 
 class SearchBar extends StatefulWidget {
-  //parameters for widget constructor
-  //onSearch for post request
-  //onChange to actively show what is being typed on the search bar
-  final Function(String) onSearch;
+  final Function(String, int) onSearch;
   final Function(String) onChange;
-  const SearchBar({required this.onSearch, required this.onChange, super.key});
+
+  const SearchBar({
+    required this.onSearch,
+    required this.onChange,
+    super.key,
+  });
 
   @override
   State<SearchBar> createState() => _SearchBarState();
@@ -108,6 +112,9 @@ class SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<SearchBar> {
   final controller = TextEditingController();
+  int selectedNumberOfImages = 3; // Default number of images
+
+  List<int> numberOfImagesOptions = [1, 3, 5, 10]; // Options for the dropdown
 
   @override
   void dispose() {
@@ -117,7 +124,7 @@ class _SearchBarState extends State<SearchBar> {
 
   void click() {
     String text = controller.text;
-    widget.onSearch(text);
+    widget.onSearch(text, selectedNumberOfImages);
     widget.onChange(text);
     controller.clear();
   }
@@ -125,14 +132,45 @@ class _SearchBarState extends State<SearchBar> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Row(children: [
+      padding: EdgeInsets.all(16.0),
+      child: Row(
+        children: [
           Expanded(
-              child: CupertinoSearchTextField(
-            controller: controller,
-            //executes when keyboard 'return' or 'search' button is clicked
-            onSubmitted: (_) => click(),
-          ))
-        ]));
+            child: CupertinoSearchTextField(
+              controller: controller,
+              onSubmitted: (_) => click(),
+            ),
+          ),
+          SizedBox(
+              width:
+                  10), // Provides spacing between the search bar and the dropdown
+          DropdownButton<int>(
+            value: selectedNumberOfImages,
+            icon: Icon(Icons.arrow_drop_down),
+            elevation: 16,
+            style: TextStyle(color: Theme.of(context).primaryColor),
+            underline: Container(
+              height: 2,
+              color: Theme.of(context).primaryColor,
+            ),
+            onChanged: (int? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  selectedNumberOfImages = newValue;
+                });
+              }
+            },
+            items:
+                numberOfImagesOptions.map<DropdownMenuItem<int>>((int value) {
+              return DropdownMenuItem<int>(
+                value: value,
+                child: Text(value
+                    .toString()), // Changed here to display only the number
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 }
