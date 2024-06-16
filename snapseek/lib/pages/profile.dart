@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:line_icons/line_icons.dart';
+import 'package:snapseek/pages/search.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -52,6 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             onPressed: signUserOut,
@@ -84,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       Padding(
                         padding: const EdgeInsets.only(left: 16),
                         child: Text(username,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
                       Row(
@@ -93,9 +97,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             onPressed: () {
                               print("Edit button tapped");
                             },
-                            child: Text("Edit", style: TextStyle(fontSize: 16)),
+                            child: const Text("Edit", style: TextStyle(fontSize: 16)),
                           ),
-                          Text(" • ",
+                          const Text(" • ",
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold)),
                           TextButton(
@@ -103,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               print("Share button tapped");
                             },
                             child:
-                                Text("Share", style: TextStyle(fontSize: 16)),
+                                const Text("Share", style: TextStyle(fontSize: 16)),
                           ),
                         ],
                       ),
@@ -122,15 +126,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   onPressed: () {
                     print("Feed button tapped");
                   },
-                  child: Text("Gallery",
+                  child: const Text("Gallery",
                       style: TextStyle(fontSize: 16, color: Colors.black)),
                 ),
-                SizedBox(width: 20), // Spacing between buttons
+                const SizedBox(width: 20), // Spacing between buttons
                 TextButton(
                   onPressed: () {
                     print("Gallery button tapped");
                   },
-                  child: Text("Feed",
+                  child: const Text("Feed",
                       style: TextStyle(fontSize: 16, color: Colors.black)),
                 ),
               ],
@@ -143,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
               childAspectRatio: 1.0, // Aspect ratio of each cell
               crossAxisSpacing: 10, // Spacing between the columns
               mainAxisSpacing: 10, // Spacing between the rows
-              padding: EdgeInsets.all(16), // Padding around the grid
+              padding: const EdgeInsets.all(16), // Padding around the grid
               children: List.generate(6, (index) {
                 // Generate 4 empty boxes
                 return Container(
@@ -158,6 +162,34 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+        child: Row(
+          children: [
+            Expanded(
+              child: GNav(
+                color: Colors.black,
+                activeColor: Colors.black,
+                onTabChange: (index) {
+                  if (index == 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchPage(),
+                      ),
+                    );
+                  }
+                },
+                tabs: const [
+                  GButton(icon: LineIcons.globe),
+                  GButton(icon: LineIcons.search),
+                  GButton(icon: LineIcons.user),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

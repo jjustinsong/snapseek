@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:snapseek/pages/login.dart';
 import 'package:snapseek/pages/login_or_register.dart';
+import 'package:snapseek/pages/profile.dart';
 import 'package:snapseek/pages/search.dart';
 
 //determines which page to actually show on app launch; if logged in: search page, if logged out: login or register page
@@ -19,7 +20,7 @@ class Auth extends StatelessWidget {
             return const SearchPage();
           }
           else {
-            return LoginOrRegister();
+            return const LoginOrRegister();
           }
         }
       ),

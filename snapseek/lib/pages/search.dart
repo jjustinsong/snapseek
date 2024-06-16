@@ -8,7 +8,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:snapseek/pages/gallery.dart';
+import 'package:snapseek/components/gallery.dart';
 import 'package:snapseek/pages/profile.dart';
 
 class SearchPage extends StatefulWidget {
@@ -59,6 +59,7 @@ class _SearchPageState extends State<SearchPage> {
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(2.0),
             child: Container(color: Colors.black, height: 0.5)),
+        automaticallyImplyLeading: false,
       ),
       body: Column(children: <Widget>[
         SearchBar(onSearch: searchImages, onChange: changeText),
@@ -66,7 +67,7 @@ class _SearchPageState extends State<SearchPage> {
         const Gallery(),
       ]),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
         child: Row(
           children: [
             Expanded(
@@ -132,7 +133,7 @@ class _SearchBarState extends State<SearchBar> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
           Expanded(
@@ -141,12 +142,10 @@ class _SearchBarState extends State<SearchBar> {
               onSubmitted: (_) => click(),
             ),
           ),
-          SizedBox(
-              width:
-                  10), // Provides spacing between the search bar and the dropdown
+          const SizedBox(width: 10), // Provides spacing between the search bar and the dropdown
           DropdownButton<int>(
             value: selectedNumberOfImages,
-            icon: Icon(Icons.arrow_drop_down),
+            icon: const Icon(Icons.arrow_drop_down),
             elevation: 16,
             style: TextStyle(color: Theme.of(context).primaryColor),
             underline: Container(
