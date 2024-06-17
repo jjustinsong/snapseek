@@ -25,8 +25,9 @@ class _ProfilePageState extends State<ProfilePage> {
   //firebase sign out
   void signUserOut() {
     FirebaseAuth.instance.signOut();
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
-  
+
   Future<void> fetchUsername() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -54,16 +55,16 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            onPressed: signUserOut,
-            icon: const Icon(Icons.logout),
-            color: Colors.black,
-          ),
-        ]
-      ),
+          title: const Text('Profile',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              onPressed: signUserOut,
+              icon: const Icon(Icons.logout),
+              color: Colors.black,
+            ),
+          ]),
       body: Column(
         children: <Widget>[
           Padding(
@@ -97,7 +98,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             onPressed: () {
                               print("Edit button tapped");
                             },
-                            child: const Text("Edit", style: TextStyle(fontSize: 16)),
+                            child: const Text("Edit",
+                                style: TextStyle(fontSize: 16)),
                           ),
                           const Text(" • ",
                               style: TextStyle(
@@ -106,8 +108,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             onPressed: () {
                               print("Share button tapped");
                             },
-                            child:
-                                const Text("Share", style: TextStyle(fontSize: 16)),
+                            child: const Text("Share",
+                                style: TextStyle(fontSize: 16)),
                           ),
                         ],
                       ),

@@ -19,6 +19,7 @@ class _SearchPageState extends State<SearchPage> {
   String search = "";
   var logger = Logger();
   List<Image> images = [];
+  bool isLoading = false;
 
   void changeText(String text) {
     setState(() {
@@ -27,6 +28,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> searchImages(String description, int numImages) async {
+    setState(() {
+      isLoading = true;
+    });
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:5000/search'),
@@ -52,17 +56,25 @@ class _SearchPageState extends State<SearchPage> {
       }
     } catch (e) {
       logger.e('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   Widget buildImagesGrid() {
+    if (isLoading) {
+      return Center(child: Text("Loading..."));
+    }
+
     if (images.isEmpty) {
       return Center(child: Text("No images to display"));
     }
 
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 2,
         crossAxisSpacing: 4.0,
         mainAxisSpacing: 4.0,
       ),
@@ -85,19 +97,22 @@ class _SearchPageState extends State<SearchPage> {
         title: const Center(
             child: Text('Search',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
-        bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(2.0),
-            child: Container(color: Colors.black, height: 0.5)),
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: <Widget>[
-          SearchBar(onSearch: searchImages, onChange: changeText),
+          SearchBar(
+              onSearch: searchImages,
+              onChange: changeText,
+              initialText: search),
           const SizedBox(height: 20.0),
-          Expanded(child: buildImagesGrid()),
+          Expanded(
+            child: buildImagesGrid(),
+          ),
         ],
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
           children: [
             Expanded(
@@ -130,10 +145,12 @@ class _SearchPageState extends State<SearchPage> {
 class SearchBar extends StatefulWidget {
   final Function(String, int) onSearch;
   final Function(String) onChange;
+  final String initialText;
 
   const SearchBar({
     required this.onSearch,
     required this.onChange,
+    required this.initialText,
     super.key,
   });
 
@@ -142,22 +159,27 @@ class SearchBar extends StatefulWidget {
 }
 
 class _SearchBarState extends State<SearchBar> {
-  final controller = TextEditingController();
+  late TextEditingController controller;
   int selectedNumberOfImages = 3;
 
   List<int> numberOfImagesOptions = [1, 3, 5, 10];
 
   @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController(text: widget.initialText);
+  }
+
+  @override
   void dispose() {
-    super.dispose();
     controller.dispose();
+    super.dispose();
   }
 
   void click() {
     String text = controller.text;
     widget.onSearch(text, selectedNumberOfImages);
     widget.onChange(text);
-    controller.clear();
   }
 
   @override
