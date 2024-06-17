@@ -1,14 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:snapseek/components/gallery.dart';
 import 'package:snapseek/pages/profile.dart';
 
 class SearchPage extends StatefulWidget {
@@ -19,16 +16,15 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  //variable to keep track of text that is being typed in the search bar
   String search = "";
+  var logger = Logger();
+  List<Image> images = [];
 
   void changeText(String text) {
     setState(() {
       search = text;
     });
   }
-
-  var logger = Logger();
 
   Future<void> searchImages(String description, int numImages) async {
     try {
@@ -39,14 +35,47 @@ class _SearchPageState extends State<SearchPage> {
         },
         body: jsonEncode(<String, dynamic>{
           'description': description,
-          'numImages': numImages, // Pass the number of images to your backend
+          'numImages': numImages,
         }),
       );
+
       logger.i('Response status: ${response.statusCode}');
-      // Handle the response if needed
+      if (response.statusCode == 200) {
+        List<dynamic> base64Strings = jsonDecode(response.body)['images'];
+        setState(() {
+          images = base64Strings
+              .map((str) => Image.memory(base64Decode(str)))
+              .toList();
+        });
+      } else {
+        logger.e('Error: Server returned ${response.statusCode}');
+      }
     } catch (e) {
       logger.e('Error: $e');
     }
+  }
+
+  Widget buildImagesGrid() {
+    if (images.isEmpty) {
+      return Center(child: Text("No images to display"));
+    }
+
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 4.0,
+        mainAxisSpacing: 4.0,
+      ),
+      itemCount: images.length,
+      itemBuilder: (BuildContext context, int index) {
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black),
+          ),
+          child: images[index],
+        );
+      },
+    );
   }
 
   @override
@@ -59,15 +88,16 @@ class _SearchPageState extends State<SearchPage> {
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(2.0),
             child: Container(color: Colors.black, height: 0.5)),
-        automaticallyImplyLeading: false,
       ),
-      body: Column(children: <Widget>[
-        SearchBar(onSearch: searchImages, onChange: changeText),
-        const SizedBox(height: 20.0),
-        const Gallery(),
-      ]),
+      body: Column(
+        children: <Widget>[
+          SearchBar(onSearch: searchImages, onChange: changeText),
+          const SizedBox(height: 20.0),
+          Expanded(child: buildImagesGrid()),
+        ],
+      ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Row(
           children: [
             Expanded(
@@ -113,9 +143,9 @@ class SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<SearchBar> {
   final controller = TextEditingController();
-  int selectedNumberOfImages = 3; // Default number of images
+  int selectedNumberOfImages = 3;
 
-  List<int> numberOfImagesOptions = [1, 3, 5, 10]; // Options for the dropdown
+  List<int> numberOfImagesOptions = [1, 3, 5, 10];
 
   @override
   void dispose() {
@@ -133,7 +163,7 @@ class _SearchBarState extends State<SearchBar> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(16.0),
       child: Row(
         children: [
           Expanded(
@@ -142,10 +172,10 @@ class _SearchBarState extends State<SearchBar> {
               onSubmitted: (_) => click(),
             ),
           ),
-          const SizedBox(width: 10), // Provides spacing between the search bar and the dropdown
+          SizedBox(width: 10), // Spacing
           DropdownButton<int>(
             value: selectedNumberOfImages,
-            icon: const Icon(Icons.arrow_drop_down),
+            icon: Icon(Icons.arrow_drop_down),
             elevation: 16,
             style: TextStyle(color: Theme.of(context).primaryColor),
             underline: Container(
@@ -163,8 +193,7 @@ class _SearchBarState extends State<SearchBar> {
                 numberOfImagesOptions.map<DropdownMenuItem<int>>((int value) {
               return DropdownMenuItem<int>(
                 value: value,
-                child: Text(value
-                    .toString()), // Changed here to display only the number
+                child: Text(value.toString()),
               );
             }).toList(),
           ),

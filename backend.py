@@ -51,14 +51,14 @@ def process_images():
 def search_images():
     data = request.get_json()
     description = data.get('description', '')
-    top_k = data.get('top_k', 5)  # Default to 5 images if not specified
+    numImages = data.get('numImages', 5)  # Default to 5 images if not specified
     
     if not description:
         return jsonify({'error': 'Description is required'}), 400
 
     # Use the CLIP model to search for the top matching images
     try:
-        top_images = searcher.search(description, UPLOAD_FOLDER, top_k)
+        top_images = searcher.search(description, UPLOAD_FOLDER, numImages)
         return jsonify({'images': top_images}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
