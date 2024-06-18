@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:snapseek/pages/edit_profile.dart';
 import 'package:snapseek/pages/search.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -96,7 +97,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: [
                           TextButton(
                             onPressed: () {
-                              print("Edit button tapped");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProfile(profileImageUrl: profileImageUrl, username: username,),
+                                ),
+                              );
                             },
                             child: const Text("Edit",
                                 style: TextStyle(fontSize: 16)),

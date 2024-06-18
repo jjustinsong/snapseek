@@ -50,7 +50,6 @@ class _RegisterState extends State<Register> {
           errorMessage = "Passwords don't match";
         });
       }
-      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);
       setState(() {
@@ -73,7 +72,7 @@ class _RegisterState extends State<Register> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Padding(
-                      padding: EdgeInsets.only(top: 100.0, bottom: 40.0),
+                      padding: EdgeInsets.only(top: 40.0, bottom: 40.0),
                       child: Text("SnapSeek",
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 25))),
