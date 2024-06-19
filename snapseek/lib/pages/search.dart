@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
@@ -7,6 +6,8 @@ import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:snapseek/pages/profile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -19,6 +20,7 @@ class _SearchPageState extends State<SearchPage> {
   String search = "";
   var logger = Logger();
   List<Image> images = [];
+  List<String> base64Strings = [];
   bool isLoading = false;
 
   void changeText(String text) {
@@ -43,11 +45,13 @@ class _SearchPageState extends State<SearchPage> {
         }),
       );
 
-      logger.i('Response status: ${response.statusCode}');
+      logger.d('Response status: ${response.statusCode}');
       if (response.statusCode == 200) {
         List<dynamic> base64Strings = jsonDecode(response.body)['images'];
         setState(() {
-          images = base64Strings
+          this.base64Strings = base64Strings.cast<String>();
+          images = this
+              .base64Strings
               .map((str) => Image.memory(base64Decode(str)))
               .toList();
         });
@@ -63,28 +67,83 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  Future<void> saveImage(String base64) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('saved_images')
+            .add({
+          'base64': base64,
+          'timestamp': Timestamp.now(),
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image saved successfully')),
+        );
+      } catch (e) {
+        logger.e('Error saving image: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving image: $e')),
+        );
+      }
+    }
+  }
+
   Widget buildImagesGrid() {
     if (isLoading) {
       return Center(child: Text("Loading..."));
     }
 
     if (images.isEmpty) {
-      return Center(child: Text("No images to display"));
+      return Center(
+          child: Text(
+        "No images to display.",
+        style: TextStyle(fontSize: 18, color: Colors.grey),
+      ));
     }
 
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 4.0,
-        mainAxisSpacing: 4.0,
       ),
       itemCount: images.length,
       itemBuilder: (BuildContext context, int index) {
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black),
+        String base64 = base64Strings[index];
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: images[index],
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () => saveImage(base64),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(4.0),
+                    child: Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          child: images[index],
         );
       },
     );

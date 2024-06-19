@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,11 +17,13 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String username = "Loading..."; // Initial text
   String profileImageUrl = ""; // URL for profile image, if available
+  List<Image> savedImages = []; // List to store fetched images
 
   @override
   void initState() {
     super.initState();
     fetchUsername();
+    fetchSavedImages();
   }
 
   //firebase sign out
@@ -48,6 +51,26 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       setState(() {
         username = "User not logged in";
+      });
+    }
+  }
+
+  Future<void> fetchSavedImages() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('saved_images')
+          .get();
+
+      List<Image> images = snapshot.docs.map((doc) {
+        String base64String = doc['base64'];
+        return Image.memory(base64Decode(base64String));
+      }).toList();
+
+      setState(() {
+        savedImages = images;
       });
     }
   }
@@ -100,7 +123,10 @@ class _ProfilePageState extends State<ProfilePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => EditProfile(profileImageUrl: profileImageUrl, username: username,),
+                                  builder: (context) => EditProfile(
+                                    profileImageUrl: profileImageUrl,
+                                    username: username,
+                                  ),
                                 ),
                               );
                             },
@@ -150,24 +176,36 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           Expanded(
             // This will make the GridView take up all remaining space
-            child: GridView.count(
-              crossAxisCount: 2, // Number of columns in the grid
-              childAspectRatio: 1.0, // Aspect ratio of each cell
-              crossAxisSpacing: 10, // Spacing between the columns
-              mainAxisSpacing: 10, // Spacing between the rows
-              padding: const EdgeInsets.all(16), // Padding around the grid
-              children: List.generate(6, (index) {
-                // Generate 4 empty boxes
-                return Container(
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300], // Light grey color for the boxes
-                      borderRadius: BorderRadius.circular(8), // Rounded corners
-                      border: Border.all(
-                          color: Colors.grey[400]!) // Border around each box
-                      ),
-                );
-              }),
-            ),
+            child: savedImages.isEmpty
+                ? Center(
+                    child: Text(
+                      "No images saved.",
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  )
+                : GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // Number of columns in the grid
+                      crossAxisSpacing: 5, // Spacing between the columns
+                      mainAxisSpacing: 5, // Spacing between the rows
+                    ),
+                    itemCount: savedImages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(
+                        decoration: BoxDecoration(
+                            borderRadius:
+                                BorderRadius.circular(8), // Rounded corners
+                            border: Border.all(
+                                color:
+                                    Colors.grey[400]!) // Border around each box
+                            ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: savedImages[index],
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
