@@ -4,11 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:snapseek/components/listactivityitem.dart';
 import 'package:snapseek/pages/edit_profile.dart';
 import 'package:snapseek/pages/search.dart';
+import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -18,6 +20,27 @@ class _ProfilePageState extends State<ProfilePage> {
   String username = "Loading..."; // Initial text
   String profileImageUrl = ""; // URL for profile image, if available
   List<Image> savedImages = []; // List to store fetched images
+
+  int tab = 0;
+
+  final stream_feed.EnrichmentFlags _flags = stream_feed.EnrichmentFlags()
+    ..withReactionCounts()
+    ..withOwnReactions();
+  
+  bool _isPaginating = false;
+
+  static const _feedGroup = 'user';
+
+  Future<void> _loadMore() async {
+    if (!_isPaginating) {
+      _isPaginating = true;
+      context.feedBloc
+        .loadMoreEnrichedActivities(feedGroup: _feedGroup)
+        .whenComplete(() {
+          _isPaginating = false;
+        });
+    }
+  }
 
   @override
   void initState() {
@@ -77,6 +100,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final client = context.feedClient;
     return Scaffold(
       appBar: AppBar(
           title: const Text('Profile',
@@ -159,6 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 TextButton(
                   onPressed: () {
                     print("Feed button tapped");
+                    tab = 0;
                   },
                   child: const Text("Gallery",
                       style: TextStyle(fontSize: 16, color: Colors.black)),
@@ -167,12 +192,56 @@ class _ProfilePageState extends State<ProfilePage> {
                 TextButton(
                   onPressed: () {
                     print("Gallery button tapped");
+                    tab = 1;
                   },
                   child: const Text("Feed",
                       style: TextStyle(fontSize: 16, color: Colors.black)),
                 ),
               ],
             ),
+          ),
+          if (tab == 1)
+          stream_feed.FlatFeedCore(
+            feedGroup: _feedGroup,
+            userId: client.currentUser!.id,
+            loadingBuilder: (context) => const Center(
+              child: CircularProgressIndicator()
+            ),
+            emptyBuilder: (context) => const Center(
+              child: Text('No activities')
+            ),
+            errorBuilder: (context, error) => Center(
+              child: Text(error.toString()),
+            ),
+            limit: 10,
+            flags: _flags,
+            feedBuilder: (
+              BuildContext context,
+              activities
+            ) {
+              return RefreshIndicator(
+                onRefresh: () {
+                  return context.feedBloc.refreshPaginatedEnrichedActivities(
+                    feedGroup: _feedGroup,
+                    flags: _flags,
+                  );
+                },
+                child: ListView.separated(
+                  itemCount: activities.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    bool shouldLoadMore = activities.length - 3 == index;
+                    if (shouldLoadMore) {
+                      _loadMore();
+                    }
+                    return ListActivityItem(
+                      activity: activities[index],
+                      feedGroup: _feedGroup,
+                    );
+                  }
+                )
+              );
+            }
           ),
           Expanded(
             // This will make the GridView take up all remaining space

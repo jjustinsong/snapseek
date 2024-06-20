@@ -14,17 +14,20 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  const apiKey = 'wknqxgxtxyyu';
+  final client = StreamFeedClient(apiKey);
   // Disable all debug paints
   debugPaintSizeEnabled = false;
   debugPaintPointersEnabled = false;
   debugPaintBaselinesEnabled = false;
   debugPaintLayerBordersEnabled = false;
   debugRepaintRainbowEnabled = false;
-  runApp(const SnapSeek());
+  runApp(SnapSeek(client: client));
 }
 
 class SnapSeek extends StatelessWidget {
-  const SnapSeek({super.key});
+  final StreamFeedClient client;
+  const SnapSeek({super.key, required this.client});
 
   // This widget is the root of your application.
   @override
@@ -35,6 +38,12 @@ class SnapSeek extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+      ),
+      builder: (context, child) => FeedProvider(
+        bloc: FeedBloc(
+          client: client,
+        ),
+        child: child!,
       ),
       home: const Auth(),
     );

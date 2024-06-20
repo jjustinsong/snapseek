@@ -4,6 +4,11 @@ import 'package:snapseek/components/button.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:snapseek/components/google_button.dart';
 import 'package:snapseek/pages/forgot_password.dart';
+import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart';
 
 //stateful because we want to show errors on screen for when login credentials are invalid
 
@@ -24,7 +29,25 @@ class _LoginState extends State<Login> {
   final TextEditingController passwordController = TextEditingController();
   String errorMessage = '';
 
-  void signIn() async {
+  Future<Token> getStreamToken(String firebaseToken, String userId) async {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:5000/get_stream_token'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'firebase_token': firebaseToken,
+        'user_id': userId,
+      })
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['stream_token'];
+    } else {
+      throw Exception('Failed to load stream token');
+    }
+  }
+
+  void signInGetToken() async {
     //resets error message to empty every time the button is clicked
     setState(() {
       errorMessage = '';
@@ -39,13 +62,16 @@ class _LoginState extends State<Login> {
         });
     try {
       //firebase sign in
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         //get text values from controllers
         email: emailController.text,
         password: passwordController.text,
       );
-      //turn off loading circle
       Navigator.pop(context);
+      String? firebaseToken = await userCredential.user?.getIdToken();
+      Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
+      final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid);
+      await context.feedClient.setUser(user, streamToken);
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);
       //set error message if we run into error
@@ -54,6 +80,8 @@ class _LoginState extends State<Login> {
       });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +137,7 @@ class _LoginState extends State<Login> {
                             decoration: TextDecoration.underline,
                           ))),
                   const SizedBox(height: 10.0),
-                  CustomButton(onTap: signIn, name: 'Sign in'),
+                  CustomButton(onTap: signInGetToken, name: 'Sign in'),
                   const SizedBox(height: 20.0),
                   Row(children: [
                     //expands a child of the row so that it fills all available space
