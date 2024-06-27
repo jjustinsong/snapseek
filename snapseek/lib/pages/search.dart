@@ -5,6 +5,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:snapseek/pages/feed.dart';
 import 'package:snapseek/pages/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -93,7 +94,10 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget buildImagesGrid() {
     if (isLoading) {
-      return Center(child: Text("Loading..."));
+      return Center(
+        child: Text("Loading...",
+        style: TextStyle(fontSize: 18, color: Colors.grey),
+      ));
     }
 
     if (images.isEmpty) {
@@ -179,11 +183,18 @@ class _SearchPageState extends State<SearchPage> {
                 color: Colors.black,
                 activeColor: Colors.black,
                 onTabChange: (index) {
+                  if (index == 0) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedPage()),
+                    );
+                  }
                   if (index == 2) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const ProfilePage()),
+                        builder: (context) => const ProfilePage()),
                     );
                   }
                 },

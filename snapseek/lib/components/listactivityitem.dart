@@ -56,7 +56,7 @@ class ListActivityItem extends StatelessWidget {
                     Text(
                       '${reactionCounts?['like']}',
                     )
-                ]
+                ],
               ),
             ]
           )
