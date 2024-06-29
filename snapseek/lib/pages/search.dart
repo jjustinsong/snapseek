@@ -6,6 +6,7 @@ import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:snapseek/pages/feed.dart';
+import 'package:snapseek/pages/post.dart';
 import 'package:snapseek/pages/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -36,7 +37,7 @@ class _SearchPageState extends State<SearchPage> {
     });
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:5000/search'),
+        Uri.parse('http://127.0.0.1:5000/search'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -94,14 +95,14 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget buildImagesGrid() {
     if (isLoading) {
-      return Center(
+      return const Center(
         child: Text("Loading...",
         style: TextStyle(fontSize: 18, color: Colors.grey),
       ));
     }
 
     if (images.isEmpty) {
-      return Center(
+      return const Center(
           child: Text(
         "No images to display.",
         style: TextStyle(fontSize: 18, color: Colors.grey),
@@ -109,7 +110,7 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
       ),
       itemCount: images.length,
@@ -121,7 +122,7 @@ class _SearchPageState extends State<SearchPage> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: double.infinity,
                   child: images[index],
@@ -130,20 +131,45 @@ class _SearchPageState extends State<SearchPage> {
               Positioned(
                 top: 8,
                 right: 8,
-                child: GestureDetector(
-                  onTap: () => saveImage(base64),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      shape: BoxShape.circle,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => saveImage(base64),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(4.0),
+                        child: const Icon(
+                          Icons.save,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
                     ),
-                    padding: const EdgeInsets.all(4.0),
-                    child: Icon(
-                      Icons.save,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
+                    const SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (context) => PostPage(base64Image: base64Strings[index])
+                        )
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(4.0),
+                        child: const Icon(
+                          Icons.post_add,
+                          color: Colors.white,
+                          size: 24,
+                        )
+                      )
+                    )
+                  ],
                 ),
               ),
             ],

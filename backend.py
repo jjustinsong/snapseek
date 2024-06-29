@@ -3,9 +3,36 @@ from flask_cors import CORS
 from clip_model import ImageSearcher
 import base64
 import os
+import pyrebase
+from stream import connect
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import auth as admin_auth
+
  
 app = Flask(__name__)
 CORS(app) # Enable CORS for all domains
+
+cred = credentials.Certificate('/Users/justinsong/snapseek/snapseek/lib/snapseek-cf1e8-firebase-adminsdk-i2zxh-c41f671a21.json')
+firebase_admin.initialize_app(cred)
+
+firebase_config = {
+    "apiKey": "AIzaSyA6FIjy5DqtS5EPZwuS9PsFNcXv47PKk6k",
+    "authDomain": "snapseek-cf1e8.firebaseapp.com",
+    "storageBucket": "snapseek-cf1e8.appspot.com",
+    "projectId": "snapseek-cf1e8",
+    "appId": "1:119430690777:android:2fb583200eabd550e64bc8",
+    "messagingSenderId": "119430690777",
+    "databaseURL": "https://snapseek-cf1e8.firebaseio.com",
+}
+
+firebase = pyrebase.initialize_app(firebase_config)
+pyrebase_auth = firebase.auth()
+
+stream_api_key = 'wknqxgxtxyyu'
+stream_api_secret = 'ads6dtvydvjhptjaapujkva8sytgp9npbgnpd2r2na8n99yhkt8m6gsruhdgqjua'
+stream_app_id = '1318996'
+client = connect(stream_api_key, stream_api_secret, stream_app_id)
 
 # Define the upload folder path (replace with Firebase later)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploaded_photos')
@@ -13,6 +40,24 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 #Initialize CLIP model
 searcher = ImageSearcher(model_name = 'ViT-B/32') # Vision Transformer model (32 x 32 pixels)
+
+@app.route('/get_stream_token', methods=['POST'])
+def get_stream_token():
+    try:
+        data = request.json
+        firebase_token = data['firebase_token']
+        user_id = data['user_id']
+        decoded_token = admin_auth.verify_id_token(firebase_token)
+        if decoded_token['uid'] != user_id:
+            return jsonify({'error': "User ID doesn't match token"}), 400
+
+        stream_token = client.create_user_token(user_id)
+        print(stream_token)
+        return jsonify({'stream_token': stream_token}), 200
+    except KeyError as e:
+        return jsonify({'error': 'Malformed data, missing ' + str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 401
 
 
 """

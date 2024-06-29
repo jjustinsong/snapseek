@@ -12,6 +12,7 @@ firebase_config = {
     "projectId": "snapseek-cf1e8",
     "appId": "1:119430690777:android:2fb583200eabd550e64bc8",
     "messagingSenderId": "119430690777",
+    "databaseURL": "https://snapseek-cf1e8.firebaseio.com",
 }
 
 firebase = pyrebase.initialize_app(firebase_config)

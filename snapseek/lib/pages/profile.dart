@@ -8,6 +8,9 @@ import 'package:snapseek/components/listactivityitem.dart';
 import 'package:snapseek/pages/edit_profile.dart';
 import 'package:snapseek/pages/search.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -47,6 +50,30 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     fetchUsername();
     fetchSavedImages();
+    stream();
+  }
+
+  Future<stream_feed.Token> getStreamToken(String firebaseToken, String userId) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/get_stream_token'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'firebase_token': firebaseToken,
+        'user_id': userId,
+      })
+    );
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse.containsKey('stream_token')) {
+        return stream_feed.Token(jsonResponse['stream_token']);
+      } else {
+        throw Exception('Stream token not found in response');
+      }
+    } else {
+      throw Exception('Failed to load stream token');
+    }
   }
 
   //firebase sign out
@@ -76,6 +103,29 @@ class _ProfilePageState extends State<ProfilePage> {
         username = "User not logged in";
       });
     }
+  }
+
+  Future<void> stream() async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      print("FirebaseAuth user is null");
+      return;
+    }
+    String? firebaseToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (firebaseToken == null) {
+      print("Firebase token is null");
+      return;
+    }
+    stream_feed.Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
+    final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid);
+    if (mounted) {
+      try {
+        await context.feedClient.setUser(user, streamToken);
+      } catch (e) {
+        print("Error setting user: $e");
+        throw e;
+      }
+    }
+    print("stream");
   }
 
   Future<void> fetchSavedImages() async {
@@ -181,18 +231,27 @@ class _ProfilePageState extends State<ProfilePage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 TextButton(
-                  onPressed: () {
-                    print("Feed button tapped");
-                    tab = 0;
+                  onPressed: () async {
+                    print("Gallery button tapped");
+                    setState(() {
+                      tab = 0;
+                    });
                   },
                   child: const Text("Gallery",
                       style: TextStyle(fontSize: 16, color: Colors.black)),
                 ),
                 const SizedBox(width: 20), // Spacing between buttons
                 TextButton(
-                  onPressed: () {
-                    print("Gallery button tapped");
-                    tab = 1;
+                  onPressed: () async {
+                    print("Feed button tapped");
+                    await stream();
+                    if (FirebaseAuth.instance.currentUser != null && context.feedClient.currentUser != null) {
+                      setState(() {
+                        tab = 1;
+                      });
+                    } else {
+                      print("User not set");
+                    }
                   },
                   child: const Text("Feed",
                       style: TextStyle(fontSize: 16, color: Colors.black)),
@@ -201,81 +260,85 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           if (tab == 1)
-          stream_feed.FlatFeedCore(
-            feedGroup: _feedGroup,
-            userId: client.currentUser!.id,
-            loadingBuilder: (context) => const Center(
-              child: CircularProgressIndicator()
-            ),
-            emptyBuilder: (context) => const Center(
-              child: Text('No activities')
-            ),
-            errorBuilder: (context, error) => Center(
-              child: Text(error.toString()),
-            ),
-            limit: 10,
-            flags: _flags,
-            feedBuilder: (
-              BuildContext context,
-              activities
-            ) {
-              return RefreshIndicator(
-                onRefresh: () {
-                  return context.feedBloc.refreshPaginatedEnrichedActivities(
-                    feedGroup: _feedGroup,
-                    flags: _flags,
-                  );
-                },
-                child: ListView.separated(
-                  itemCount: activities.length,
-                  separatorBuilder: (context, index) => const Divider(),
-                  itemBuilder: (context, index) {
-                    bool shouldLoadMore = activities.length - 3 == index;
-                    if (shouldLoadMore) {
-                      _loadMore();
-                    }
-                    return ListActivityItem(
-                      activity: activities[index],
+            stream_feed.FlatFeedCore(
+              feedGroup: _feedGroup,
+              userId: client.currentUser!.id,
+              loadingBuilder: (context) => const Center(
+                child: CircularProgressIndicator()
+              ),
+              emptyBuilder: (context) => const Center(
+                child: Text('No activities')
+              ),
+              errorBuilder: (context, error) => Center(
+                child: Text(error.toString()),
+              ),
+              limit: 10,
+              flags: _flags,
+              feedBuilder: (
+                BuildContext context,
+                activities
+              ) {
+                return RefreshIndicator(
+                  onRefresh: () {
+                    return context.feedBloc.refreshPaginatedEnrichedActivities(
                       feedGroup: _feedGroup,
+                      flags: _flags,
                     );
-                  }
-                )
-              );
-            }
-          ),
-          Expanded(
-            // This will make the GridView take up all remaining space
-            child: savedImages.isEmpty
-                ? Center(
-                    child: Text(
-                      "No images saved.",
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                  )
-                : GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // Number of columns in the grid
-                      crossAxisSpacing: 5, // Spacing between the columns
-                      mainAxisSpacing: 5, // Spacing between the rows
-                    ),
-                    itemCount: savedImages.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        decoration: BoxDecoration(
-                            borderRadius:
-                                BorderRadius.circular(8), // Rounded corners
-                            border: Border.all(
-                                color:
-                                    Colors.grey[400]!) // Border around each box
-                            ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: savedImages[index],
-                        ),
+                  },
+                  child: ListView.separated(
+                    itemCount: activities.length,
+                    separatorBuilder: (context, index) => const Divider(),
+                    itemBuilder: (context, index) {
+                      bool shouldLoadMore = activities.length - 3 == index;
+                      if (shouldLoadMore) {
+                        _loadMore();
+                      }
+                      return ListActivityItem(
+                        activity: activities[index],
+                        feedGroup: _feedGroup,
                       );
-                    },
-                  ),
-          ),
+                    }
+                  )
+                );
+              }
+            ),
+          if (tab == 0)
+            Expanded(
+              // This will make the GridView take up all remaining space
+              child: savedImages.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No images saved.",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    )
+                  : GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2, // Number of columns in the grid
+                        crossAxisSpacing: 5, // Spacing between the columns
+                        mainAxisSpacing: 5, // Spacing between the rows
+                      ),
+                      itemCount: savedImages.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius:
+                                    BorderRadius.circular(8), // Rounded corners
+                                border: Border.all(
+                                    color:
+                                        Colors.grey[400]!) // Border around each box
+                                ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: savedImages[index],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
         ],
       ),
       bottomNavigationBar: Padding(

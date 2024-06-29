@@ -31,7 +31,7 @@ class _LoginState extends State<Login> {
 
   Future<Token> getStreamToken(String firebaseToken, String userId) async {
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:5000/get_stream_token'),
+      Uri.parse('http://127.0.0.1:5000/get_stream_token'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -41,7 +41,12 @@ class _LoginState extends State<Login> {
       })
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['stream_token'];
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse.containsKey('stream_token')) {
+        return Token(jsonResponse['stream_token']);
+      } else {
+        throw Exception('Stream token not found in response');
+      }
     } else {
       throw Exception('Failed to load stream token');
     }
@@ -55,6 +60,7 @@ class _LoginState extends State<Login> {
     //loading circle
     showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (context) {
           return const Center(
             child: CircularProgressIndicator(),
@@ -67,17 +73,30 @@ class _LoginState extends State<Login> {
         email: emailController.text,
         password: passwordController.text,
       );
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
       String? firebaseToken = await userCredential.user?.getIdToken();
       Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
       final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid);
-      await context.feedClient.setUser(user, streamToken);
+      if (mounted) {
+        try {
+          await context.feedClient.setUser(user, streamToken);
+        } catch (e) {
+          print("Error setting user: $e");
+          throw e;
+        }
+      }
     } on FirebaseAuthException catch (e) {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
       //set error message if we run into error
-      setState(() {
-        errorMessage = 'Incorrect email/password';
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = 'Incorrect email/password';
+        });
+      }
     }
   }
 
