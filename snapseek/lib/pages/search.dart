@@ -212,15 +212,21 @@ class _SearchPageState extends State<SearchPage> {
                   if (index == 0) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const FeedPage()),
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) => const FeedPage(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
                     );
                   }
                   if (index == 2) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfilePage()),
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) => const ProfilePage(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
                     );
                   }
                 },

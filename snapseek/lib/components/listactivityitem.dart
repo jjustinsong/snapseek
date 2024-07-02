@@ -17,17 +17,20 @@ class ListActivityItem extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('${activity.object}'),
-          ),
           if (attachments != null && attachments.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Image.network(attachments[0].url),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Image.network(attachments[0].url),
+              ),
             ),
-          Row(
-            children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 43),
+            child: Text('${activity.object}', style: TextStyle(fontSize: 15, color: Colors.black)),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 25.5),
+            child:
               Row(
                 children: [
                   IconButton(
@@ -52,13 +55,12 @@ class ListActivityItem extends StatelessWidget {
                       ? const Icon(Icons.favorite_rounded)
                       : const Icon(Icons.favorite_outline),
                   ),
-                  if (reactionCounts?['like'] != null)
+                  if (reactionCounts!['like']! > 0)
                     Text(
-                      '${reactionCounts?['like']}',
+                      '${reactionCounts['like']}',
                     )
                 ],
               ),
-            ]
           )
         ]
       )

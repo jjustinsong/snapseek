@@ -6,6 +6,7 @@ import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:snapseek/components/listactivityitem.dart';
 import 'package:snapseek/pages/edit_profile.dart';
+import 'package:snapseek/pages/feed.dart';
 import 'package:snapseek/pages/search.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
 import 'package:path_provider/path_provider.dart';
@@ -48,9 +49,20 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    fetchData();
+  }
+
+  void fetchData() {
     fetchUsername();
+    fetchProfilePicture();
     fetchSavedImages();
-    stream();
+    stream();   
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    fetchData();
   }
 
   Future<stream_feed.Token> getStreamToken(String firebaseToken, String userId) async {
@@ -89,9 +101,10 @@ class _ProfilePageState extends State<ProfilePage> {
           .collection('users')
           .doc(user.uid)
           .get();
-      if (userDoc.exists) {
+      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+      if (userData['username'] != null) {
         setState(() {
-          username = userDoc['username'] as String;
+          username = userData['username'] as String;
         });
       } else {
         setState(() {
@@ -102,6 +115,22 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         username = "User not logged in";
       });
+    }
+  }
+
+  Future<void> fetchProfilePicture() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+      if (userData['profileImageUrl'] != null) {
+        setState(() {
+          profileImageUrl = userData['profileImageUrl'] as String;
+        });
+      }
     }
   }
 
@@ -193,8 +222,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       Row(
                         children: [
                           TextButton(
-                            onPressed: () {
-                              Navigator.push(
+                            onPressed: () async {
+                              var result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => EditProfile(
@@ -203,6 +232,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               );
+                              if (result == true) {
+                                fetchData();
+                              }
                             },
                             child: const Text("Edit",
                                 style: TextStyle(fontSize: 16)),
@@ -260,47 +292,49 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           if (tab == 1)
-            stream_feed.FlatFeedCore(
-              feedGroup: _feedGroup,
-              userId: client.currentUser!.id,
-              loadingBuilder: (context) => const Center(
-                child: CircularProgressIndicator()
-              ),
-              emptyBuilder: (context) => const Center(
-                child: Text('No activities')
-              ),
-              errorBuilder: (context, error) => Center(
-                child: Text(error.toString()),
-              ),
-              limit: 10,
-              flags: _flags,
-              feedBuilder: (
-                BuildContext context,
-                activities
-              ) {
-                return RefreshIndicator(
-                  onRefresh: () {
-                    return context.feedBloc.refreshPaginatedEnrichedActivities(
-                      feedGroup: _feedGroup,
-                      flags: _flags,
-                    );
-                  },
-                  child: ListView.separated(
-                    itemCount: activities.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      bool shouldLoadMore = activities.length - 3 == index;
-                      if (shouldLoadMore) {
-                        _loadMore();
-                      }
-                      return ListActivityItem(
-                        activity: activities[index],
+            Expanded(
+              child: stream_feed.FlatFeedCore(
+                feedGroup: _feedGroup,
+                userId: client.currentUser!.id,
+                loadingBuilder: (context) => const Center(
+                  child: CircularProgressIndicator()
+                ),
+                emptyBuilder: (context) => const Center(
+                  child: Text('No posts', style: TextStyle(fontSize: 18, color: Colors.grey))
+                ),
+                errorBuilder: (context, error) => Center(
+                  child: Text(error.toString()),
+                ),
+                limit: 10,
+                flags: _flags,
+                feedBuilder: (
+                  BuildContext context,
+                  activities
+                ) {
+                  return RefreshIndicator(
+                    onRefresh: () {
+                      return context.feedBloc.refreshPaginatedEnrichedActivities(
                         feedGroup: _feedGroup,
+                        flags: _flags,
                       );
-                    }
-                  )
-                );
-              }
+                    },
+                    child: ListView.separated(
+                      itemCount: activities.length,
+                      separatorBuilder: (context, index) => const Divider(),
+                      itemBuilder: (context, index) {
+                        bool shouldLoadMore = activities.length - 3 == index;
+                        if (shouldLoadMore) {
+                          _loadMore();
+                        }
+                        return ListActivityItem(
+                          activity: activities[index],
+                          feedGroup: _feedGroup,
+                        );
+                      }
+                    )
+                  );
+                }
+              ),
             ),
           if (tab == 0)
             Expanded(
@@ -350,11 +384,23 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.black,
                 activeColor: Colors.black,
                 onTabChange: (index) {
+                  if (index == 0) {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) => const FeedPage(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
+                      ),
+                    );
+                  }
                   if (index == 1) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const SearchPage(),
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation1, animation2) => const SearchPage(),
+                        transitionDuration: Duration.zero,
+                        reverseTransitionDuration: Duration.zero,
                       ),
                     );
                   }
