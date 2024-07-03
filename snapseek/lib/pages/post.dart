@@ -73,6 +73,14 @@ class _PostPageState extends State<PostPage> {
       );
       return;
     }
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        });
 
     String? firebaseToken = await FirebaseAuth.instance.currentUser?.getIdToken();
     Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
@@ -115,6 +123,7 @@ class _PostPageState extends State<PostPage> {
       }
       print("Successfully uploaded image");
       uploadController.clear();
+      Navigator.of(context).pop();
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
-
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:snapseek/components/button.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:snapseek/pages/profile.dart';
+import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
 
 class EditProfile extends StatefulWidget {
   String profileImageUrl;
@@ -22,6 +24,67 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController usernameController = TextEditingController();
   File? _imageFile;
   final User? user = FirebaseAuth.instance.currentUser;
+
+  Future<stream_feed.Token> getStreamToken(String firebaseToken, String userId) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/get_stream_token'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'firebase_token': firebaseToken,
+        'user_id': userId,
+      })
+    );
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse.containsKey('stream_token')) {
+        return stream_feed.Token(jsonResponse['stream_token']);
+      } else {
+        throw Exception('Stream token not found in response');
+      }
+    } else {
+      throw Exception('Failed to load stream token');
+    }
+  }
+
+  Future<void> stream() async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      print("FirebaseAuth user is null");
+      return;
+    }
+    String? firebaseToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+    if (firebaseToken == null) {
+      print("Firebase token is null");
+      return;
+    }
+    stream_feed.Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
+    final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid);
+    if (mounted) {
+      try {
+        await context.feedClient.setUser(user, streamToken);
+      } catch (e) {
+        print("Error setting user: $e");
+        throw e;
+      }
+    }
+    print("stream");
+  }
+
+  Future<void> refreshStreamUserData() async {
+    try {
+      // Fetch the latest user data
+      var updatedUser = await context.feedClient.user(user!.uid).get();
+      
+      // Update your state management solution or local state to reflect changes
+      setState(() {
+        widget.username = updatedUser.data!['handle'] as String;
+        widget.profileImageUrl = updatedUser.data!['profileImage'] as String;
+      });
+    } catch (e) {
+      print("Error refreshing user data: $e");
+    }
+  }
 
   Future<void> saveChanges() async {
     if (user == null) {
@@ -39,13 +102,16 @@ class _EditProfileState extends State<EditProfile> {
           );
         });
     try {
+      String? firebaseToken = await FirebaseAuth.instance.currentUser?.getIdToken();
+      stream_feed.Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
+      Map<String, dynamic> userDataUpdates = {};
       if (usernameController.text.isNotEmpty) {
+        userDataUpdates['handle'] = usernameController.text;
         await FirebaseFirestore.instance
               .collection('users')
               .doc(user!.uid)
               .update({'username': usernameController.text});
       }
-      print(_imageFile);
       if (_imageFile != null) {
         String imageUrl = await uploadImage(_imageFile!);
         await user!.updatePhotoURL(imageUrl);
@@ -53,7 +119,15 @@ class _EditProfileState extends State<EditProfile> {
             .collection('users')
             .doc(user!.uid)
             .update({'profileImageUrl': imageUrl});
+        userDataUpdates['profileImage'] = imageUrl;
       }
+      if (userDataUpdates.isNotEmpty) {
+        await context.feedClient.setUser(
+          stream_feed.User(id: user!.uid, data: userDataUpdates),
+          streamToken
+        );
+      }
+      await refreshStreamUserData();
       Navigator.of(context).pop();
       Navigator.pop(context, true);
     } on Exception catch (e) {

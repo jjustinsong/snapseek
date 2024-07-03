@@ -203,7 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   radius: 60, // Increased radius for a larger profile image
                   backgroundImage: profileImageUrl.isNotEmpty
                       ? NetworkImage(profileImageUrl)
-                      : null,
+                      : AssetImage('lib/images/default_avatar.jpeg'),
                   child: profileImageUrl.isEmpty
                       ? const Icon(Icons.person, size: 60)
                       : null,
@@ -393,6 +393,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         reverseTransitionDuration: Duration.zero,
                       ),
                     );
+                    stream();
                   }
                   if (index == 1) {
                     Navigator.push(

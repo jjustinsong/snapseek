@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +7,7 @@ import 'package:snapseek/components/button.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:snapseek/components/google_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
 
 //stateful because we want to show errors on screen for when password and confirm password are different
 
@@ -23,6 +26,29 @@ class _RegisterState extends State<Register> {
   final TextEditingController confirmPasswordController =
       TextEditingController();
   String errorMessage = '';
+
+  Future<stream_feed.Token> getStreamToken(String firebaseToken, String userId) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/get_stream_token'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'firebase_token': firebaseToken,
+        'user_id': userId,
+      })
+    );
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse.containsKey('stream_token')) {
+        return stream_feed.Token(jsonResponse['stream_token']);
+      } else {
+        throw Exception('Stream token not found in response');
+      }
+    } else {
+      throw Exception('Failed to load stream token');
+    }
+  }
 
   void signUp() async {
     showDialog(
@@ -45,10 +71,27 @@ class _RegisterState extends State<Register> {
           'username': userController.text, // Store the username
           // Add other user details here if necessary
         });
+        String? firebaseToken = await userCredential.user?.getIdToken();
+        stream_feed.Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
+        final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid, data: {
+          'handle': userController.text,
+          'profileImage': 'lib/images/default_avatar.jpeg'
+        });
+        if (mounted) {
+          try {
+            await context.feedClient.setUser(user, streamToken);
+          } catch (e) {
+            print("Error setting user: $e");
+            throw e;
+          }
+        }
       } else {
         setState(() {
           errorMessage = "Passwords don't match";
         });
+      }
+      if (mounted) {
+        Navigator.of(context).pop();
       }
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);

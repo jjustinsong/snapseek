@@ -8,8 +8,10 @@ import 'package:logger/logger.dart';
 import 'package:snapseek/pages/feed.dart';
 import 'package:snapseek/pages/post.dart';
 import 'package:snapseek/pages/profile.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
+
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -29,6 +31,58 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       search = text;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    stream();
+  }
+
+  Future<stream_feed.Token> getStreamToken(String firebaseToken, String userId) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/get_stream_token'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'firebase_token': firebaseToken,
+        'user_id': userId,
+      })
+    );
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse.containsKey('stream_token')) {
+        return stream_feed.Token(jsonResponse['stream_token']);
+      } else {
+        throw Exception('Stream token not found in response');
+      }
+    } else {
+      throw Exception('Failed to load stream token');
+    }
+  }
+
+  Future<void> stream() async {
+    if (firebase.FirebaseAuth.instance.currentUser == null) {
+      print("FirebaseAuth user is null");
+      return;
+    }
+    String? firebaseToken = await firebase.FirebaseAuth.instance.currentUser?.getIdToken();
+    if (firebaseToken == null) {
+      print("Firebase token is null");
+      return;
+    }
+    stream_feed.Token streamToken = await getStreamToken(firebaseToken!, firebase.FirebaseAuth.instance.currentUser!.uid);
+    final user = stream_feed.User(id: firebase.FirebaseAuth.instance.currentUser!.uid);
+    if (mounted) {
+      try {
+        await context.feedClient.setUser(user, streamToken);
+      } catch (e) {
+        print("Error setting user: $e");
+        throw e;
+      }
+    }
+    print("stream");
   }
 
   Future<void> searchImages(String description, int numImages) async {
@@ -70,7 +124,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> saveImage(String base64) async {
-    User? user = FirebaseAuth.instance.currentUser;
+    firebase.User? user = firebase.FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
         await FirebaseFirestore.instance

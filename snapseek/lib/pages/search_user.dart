@@ -1,8 +1,10 @@
-/*import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 
 class SearchUserPage extends StatefulWidget {
@@ -14,10 +16,15 @@ class SearchUserPage extends StatefulWidget {
 
 class _SearchUserPageState extends State<SearchUserPage> {
   String search = "";
+  List<stream_feed.User> allUsers = [];
+  List<stream_feed.User> filteredUsers = [];
 
   void changeText(String text) {
     setState(() {
       search = text;
+      filteredUsers = allUsers.where((user) {
+        return (user.data?['username'] as String).toLowerCase().contains(search.toLowerCase());
+      }).toList();
     });
   }
 
@@ -25,21 +32,83 @@ class _SearchUserPageState extends State<SearchUserPage> {
 
   }
 
-  Future<List<Map<String, dynamic>>> fetchUsers() async {
+  @override
+  void initState() {
+    super.initState();
+    stream();
+    fetchUserData().then((users) {
+      setState(() {
+        allUsers = users;
+        filteredUsers = users;
+      });
+    });
+  }
+
+  Future<stream_feed.Token> getStreamToken(String firebaseToken, String userId) async {
+    final response = await http.post(
+      Uri.parse('http://127.0.0.1:5000/get_stream_token'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'firebase_token': firebaseToken,
+        'user_id': userId,
+      })
+    );
+    if (response.statusCode == 200) {
+      var jsonResponse = jsonDecode(response.body);
+      if (jsonResponse.containsKey('stream_token')) {
+        return stream_feed.Token(jsonResponse['stream_token']);
+      } else {
+        throw Exception('Stream token not found in response');
+      }
+    } else {
+      throw Exception('Failed to load stream token');
+    }
+  }
+
+  Future<void> stream() async {
+    if (firebase.FirebaseAuth.instance.currentUser == null) {
+      print("FirebaseAuth user is null");
+      return;
+    }
+    String? firebaseToken = await firebase.FirebaseAuth.instance.currentUser?.getIdToken();
+    if (firebaseToken == null) {
+      print("Firebase token is null");
+      return;
+    }
+    stream_feed.Token streamToken = await getStreamToken(firebaseToken!, firebase.FirebaseAuth.instance.currentUser!.uid);
+    final user = stream_feed.User(id: firebase.FirebaseAuth.instance.currentUser!.uid);
+    if (mounted) {
+      try {
+        await context.feedClient.setUser(user, streamToken);
+      } catch (e) {
+        print("Error setting user: $e");
+        throw e;
+      }
+    }
+    print("stream");
+  }
+
+  Future<List<stream_feed.User>> fetchUserData() async {
     var snapshot = await FirebaseFirestore.instance.collection('users').get();
-    return snapshot.docs
-        .map((doc) => {
-          'id': doc.id,
-          'username': doc['username'],
-          'profileImageUrl': doc.data()['profileImageUrl']
-        })
-        .toList();
+    String currentUserId = firebase.FirebaseAuth.instance.currentUser?.uid ?? '';
+    return snapshot.docs.where((doc) => doc.id != currentUserId).map((doc) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      return stream_feed.User(
+        id: doc.id,
+        data: {
+          'username': data['username'] as String,
+          'profileImageUrl': data.containsKey('profileImageUrl') ? data['profileImageUrl'] as String : '',
+        },
+      );
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Users')),
+      appBar: AppBar(title: const Text('Users', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))),
       body: Column(
         children: [
           SearchBar(
@@ -48,29 +117,15 @@ class _SearchUserPageState extends State<SearchUserPage> {
             initialText: search,
           ),
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: fetchUsers(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: \${snapshot.error}'));
-                }
-                final users = snapshot.data!;
-                return ListView.builder(
-                  itemCount: users.length,
-                  itemBuilder: (ctx, index) {
-                    return UserTile(
-                      user: stream_feed.User(id: users[index]['id'], data: users[index]),
-                      onTap: () {},
-                      trailing: Text(users[index]['username'])
-                    );
-                  }
+            child: ListView(
+              children: filteredUsers.map((user) {
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: FollowUserTile(user: user),
                 );
-              }
-            ),
-          ),
+              }).toList()
+            )
+          )
         ],
       )
     );
@@ -162,15 +217,20 @@ class UserTile extends StatelessWidget {
   final VoidCallback? onTap;
   final Widget? trailing;
 
-  Future<Map<String, String>> fetchUserData(String userId) async {
-    DocumentSnapshot userDoc = await 
-  }
-
   @override
   Widget build(BuildContext context) {
+    String profileImageUrl = user.data?['profileImageUrl'] as String? ?? '';
+    String username = user.data?['username'] as String? ?? '';
+
+    ImageProvider imageProvider;
+    if (profileImageUrl.isNotEmpty && Uri.parse(profileImageUrl).isAbsolute) {
+      imageProvider = NetworkImage(profileImageUrl);
+    } else {
+      imageProvider = const AssetImage('lib/images/default_avatar.jpeg');
+    }
     return ListTile(
-      leading: CircleAvatar(backgroundImage: NetworkImage(fetchProfilePicture() as String)),
-      title: Text(fetchUsername() as String),
+      leading: CircleAvatar(backgroundImage: imageProvider),
+      title: Text(username),
       onTap: onTap,
       trailing: trailing,
     );
@@ -221,12 +281,10 @@ class _SearchBarState extends State<SearchBar> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Expanded(
-        child: CupertinoSearchTextField(
-          controller: controller,
-          onSubmitted: (_) => click(),
-        ),
+      child: CupertinoSearchTextField(
+        controller: controller,
+        onSubmitted: (_) => click(),
       ),
     );
   }
-}*/
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snapseek/components/extension.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart';
 
 class ListActivityItem extends StatelessWidget {
@@ -14,6 +15,17 @@ class ListActivityItem extends StatelessWidget {
     final isLikedByUser = (ownReactions?['like']?.length ?? 0) > 0;
 
     return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: actor.profileImage.isNotEmpty ? NetworkImage(actor.profileImage) : const AssetImage('lib/images/default_avatar.jpeg'),
+      ),
+      title: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          children: [
+            Text(actor.handle),
+          ]
+        )
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -55,9 +67,9 @@ class ListActivityItem extends StatelessWidget {
                       ? const Icon(Icons.favorite_rounded)
                       : const Icon(Icons.favorite_outline),
                   ),
-                  if (reactionCounts!['like']! > 0)
+                  if (reactionCounts?['like'] != null)
                     Text(
-                      '${reactionCounts['like']}',
+                      '${reactionCounts?['like']}',
                     )
                 ],
               ),
