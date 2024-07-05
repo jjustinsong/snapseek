@@ -51,6 +51,7 @@ dependencies:
   photo_manager: ^3.1.1
   stream_feed_flutter_core: ^0.8.0
   firebase_storage: ^12.1.0
+  share_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,16 +1,21 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:snapseek/pages/feed.dart';
 import 'package:snapseek/pages/post.dart';
 import 'package:snapseek/pages/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
+import 'package:path_provider/path_provider.dart';
 
 
 class SearchPage extends StatefulWidget {
@@ -147,6 +152,24 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  Future<String> writeBytesToFile(Uint8List bytes, String fileName) async {
+    try {
+      Directory docDir = await getApplicationDocumentsDirectory();
+      File file = File('${docDir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      if (await file.exists()) {
+        print("file exists. written to ${file.path}");
+        return file.path;
+      } else {
+        print("file doesn't exist");
+        throw Exception('file does not exist');
+      }
+    } catch (e) {
+      print("Error writing file: $e");
+      throw e;
+    }
+  }
+
   Widget buildImagesGrid() {
     if (isLoading) {
       return const Center(
@@ -218,6 +241,31 @@ class _SearchPageState extends State<SearchPage> {
                         padding: const EdgeInsets.all(4.0),
                         child: const Icon(
                           Icons.post_add,
+                          color: Colors.white,
+                          size: 24,
+                        )
+                      )
+                    ),
+                    const SizedBox(width: 5),
+                    GestureDetector(
+                      onTap: () async {
+                        final bytes = base64Decode(base64);
+                        final filePath = await writeBytesToFile(bytes, 'share_file.png');
+                        if (File(filePath).existsSync()) {
+                          await Share.shareXFiles([XFile(filePath, mimeType: 'image/png')]);
+                        } else {
+                          print("File doesn't exist at path: $filePath");
+                        }
+                        
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(4.0),
+                        child: const Icon(
+                          Icons.share,
                           color: Colors.white,
                           size: 24,
                         )

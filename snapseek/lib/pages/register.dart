@@ -10,13 +10,14 @@ import 'package:snapseek/components/extension.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:snapseek/components/google_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:snapseek/pages/login.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
 
 //stateful because we want to show errors on screen for when password and confirm password are different
 
 class Register extends StatefulWidget {
-  final Function()? onTap;
-  const Register({super.key, required this.onTap});
+  final Function()? onRegisterComplete;
+  const Register({super.key, this.onRegisterComplete});
 
   @override
   State<Register> createState() => _RegisterState();
@@ -76,7 +77,6 @@ class _RegisterState extends State<Register> {
           // Add other user details here if necessary
         });
         userData['handle'] = userController.text;
-        userData['profile_image'] = 'lib/images/default_avatar.jpeg';
         String? firebaseToken = await userCredential.user?.getIdToken();
         stream_feed.Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
         final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid);
@@ -92,6 +92,7 @@ class _RegisterState extends State<Register> {
         }
         print(user.handle);
         print(user.profileImage);
+        widget.onRegisterComplete?.call();
         Navigator.pop(context);
       } else {
         Navigator.pop(context);
@@ -184,7 +185,16 @@ class _RegisterState extends State<Register> {
                       GestureDetector(
                         //onTap passed in from login_or_register.dart file
                         //to call variables from the stateful class, use 'widget._____'
-                        onTap: widget.onTap,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation1, animation2) => const Login(),
+                              transitionDuration: Duration.zero,
+                              reverseTransitionDuration: Duration.zero,
+                            )
+                          );
+                        },
                         child: const Text('Sign in',
                             style: TextStyle(
                                 color: Colors.blue,

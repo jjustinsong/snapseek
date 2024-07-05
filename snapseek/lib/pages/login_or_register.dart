@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:snapseek/pages/login.dart';
 import 'package:snapseek/pages/register.dart';
 
@@ -34,4 +34,4 @@ class _LoginOrRegisterState extends State<LoginOrRegister> {
       );
     }
   }
-}
+}*/

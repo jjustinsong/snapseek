@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:snapseek/components/button.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:snapseek/components/google_button.dart';
+import 'package:snapseek/pages/auth.dart';
 import 'package:snapseek/pages/forgot_password.dart';
+import 'package:snapseek/pages/register.dart';
+import 'package:snapseek/pages/search.dart';
 import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart' as stream_feed;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,9 +17,7 @@ import 'package:stream_feed_flutter_core/stream_feed_flutter_core.dart';
 
 class Login extends StatefulWidget {
   //parameters for the widget are created here
-
-  final Function()? onTap;
-  const Login({super.key, required this.onTap});
+  const Login({super.key});
 
   @override
   State<Login> createState() => _LoginState();
@@ -87,6 +88,14 @@ class _LoginState extends State<Login> {
           throw e;
         }
       }
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation1, animation2) => const SearchPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        )
+      );
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         Navigator.of(context).pop();
@@ -188,7 +197,16 @@ class _LoginState extends State<Login> {
                       GestureDetector(
                         //onTap passed in from login_or_register.dart file
                         //to call variables from the stateful class, use 'widget._____'
-                        onTap: widget.onTap,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation1, animation2) => const Auth(),
+                              transitionDuration: Duration.zero,
+                              reverseTransitionDuration: Duration.zero,
+                            )
+                          );
+                        },
                         child: const Text('Sign up',
                             style: TextStyle(
                                 color: Colors.blue,

@@ -216,38 +216,24 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
-                      Row(
-                        children: [
-                          TextButton(
-                            onPressed: () async {
-                              var result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditProfile(
-                                    profileImageUrl: profileImageUrl,
-                                    username: username,
-                                  ),
-                                ),
-                              );
-                              if (result == true) {
-                                fetchData();
-                              }
-                            },
-                            child: const Text("Edit",
-                                style: TextStyle(fontSize: 16)),
-                          ),
-                          const Text(" • ",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                          TextButton(
-                            onPressed: () {
-                              print("Share button tapped");
-                            },
-                            child: const Text("Share",
-                                style: TextStyle(fontSize: 16)),
-                          ),
-                        ],
-                      ),
+                      TextButton(
+                        onPressed: () async {
+                          var result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfile(
+                                profileImageUrl: profileImageUrl,
+                                username: username,
+                              ),
+                            ),
+                          );
+                          if (result == true) {
+                            fetchData();
+                          }
+                        },
+                        child: const Text("Edit",
+                            style: TextStyle(fontSize: 16)),
+                      )
                     ],
                   ),
                 ),
