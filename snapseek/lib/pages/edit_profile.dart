@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:snapseek/components/button.dart';
+import 'package:snapseek/components/extension.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:snapseek/pages/profile.dart';
@@ -71,21 +72,6 @@ class _EditProfileState extends State<EditProfile> {
     print("stream");
   }
 
-  Future<void> refreshStreamUserData() async {
-    try {
-      // Fetch the latest user data
-      var updatedUser = await context.feedClient.user(user!.uid).get();
-      
-      // Update your state management solution or local state to reflect changes
-      setState(() {
-        widget.username = updatedUser.data!['handle'] as String;
-        widget.profileImageUrl = updatedUser.data!['profileImage'] as String;
-      });
-    } catch (e) {
-      print("Error refreshing user data: $e");
-    }
-  }
-
   Future<void> saveChanges() async {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,15 +105,16 @@ class _EditProfileState extends State<EditProfile> {
             .collection('users')
             .doc(user!.uid)
             .update({'profileImageUrl': imageUrl});
-        userDataUpdates['profileImage'] = imageUrl;
+        userDataUpdates['profile_image'] = imageUrl;
       }
       if (userDataUpdates.isNotEmpty) {
-        await context.feedClient.setUser(
-          stream_feed.User(id: user!.uid, data: userDataUpdates),
-          streamToken
-        );
+        print(userDataUpdates);
+        try {
+          await context.feedClient.user(user!.uid).update(userDataUpdates);
+        } catch (e) {
+          print('Failed to set user: $e');
+        }
       }
-      await refreshStreamUserData();
       Navigator.of(context).pop();
       Navigator.pop(context, true);
     } on Exception catch (e) {

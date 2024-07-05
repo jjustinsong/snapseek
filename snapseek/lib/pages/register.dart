@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:snapseek/components/button.dart';
+import 'package:snapseek/components/extension.dart';
 import 'package:snapseek/components/textfield.dart';
 import 'package:snapseek/components/google_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -58,6 +61,7 @@ class _RegisterState extends State<Register> {
             child: CircularProgressIndicator(),
           );
         });
+    Map<String, dynamic> userData = {};
     try {
       //only create user if password and confirmpassword are the same
       if (passwordController.text == confirmPasswordController.text) {
@@ -71,32 +75,34 @@ class _RegisterState extends State<Register> {
           'username': userController.text, // Store the username
           // Add other user details here if necessary
         });
+        userData['handle'] = userController.text;
+        userData['profile_image'] = 'lib/images/default_avatar.jpeg';
         String? firebaseToken = await userCredential.user?.getIdToken();
         stream_feed.Token streamToken = await getStreamToken(firebaseToken!, FirebaseAuth.instance.currentUser!.uid);
-        final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid, data: {
-          'handle': userController.text,
-          'profileImage': 'lib/images/default_avatar.jpeg'
-        });
-        if (mounted) {
-          try {
-            await context.feedClient.setUser(user, streamToken);
-          } catch (e) {
-            print("Error setting user: $e");
-            throw e;
-          }
+        final user = stream_feed.User(id: FirebaseAuth.instance.currentUser!.uid);
+        try {
+          await context.feedClient.setUser(user, streamToken);
+        } catch (e) {
+          print('Error setting user: $errorPropertyTextConfiguration');
         }
+        try {
+          await context.feedClient.user(FirebaseAuth.instance.currentUser!.uid).update(userData);
+        } catch (e) {
+          print('Error updating user: $e');
+        }
+        print(user.handle);
+        print(user.profileImage);
+        Navigator.pop(context);
       } else {
+        Navigator.pop(context);
         setState(() {
           errorMessage = "Passwords don't match";
         });
       }
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);
       setState(() {
-        errorMessage = "Passwords don't match";
+        errorMessage = "$e";
       });
     }
   }

@@ -15,13 +15,15 @@ class ListActivityItem extends StatelessWidget {
     final isLikedByUser = (ownReactions?['like']?.length ?? 0) > 0;
 
     return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: actor.profileImage.isNotEmpty ? NetworkImage(actor.profileImage) : const AssetImage('lib/images/default_avatar.jpeg'),
-      ),
       title: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
           children: [
+            const SizedBox(width: 15),
+            CircleAvatar(
+              backgroundImage: actor.profileImage.isNotEmpty ? NetworkImage(actor.profileImage) : const AssetImage('lib/images/default_avatar.jpeg'),
+            ),
+            const SizedBox(width: 10),
             Text(actor.handle),
           ]
         )
@@ -33,47 +35,43 @@ class ListActivityItem extends StatelessWidget {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Image.network(attachments[0].url),
+                child: Image.network(attachments[0].url, scale: 0.85),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.only(left: 43),
+            padding: const EdgeInsets.only(left: 17),
             child: Text('${activity.object}', style: TextStyle(fontSize: 15, color: Colors.black)),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 25.5),
-            child:
-              Row(
-                children: [
-                  IconButton(
-                    iconSize:16,
-                    onPressed: () {
-                      if (isLikedByUser) {
-                        context.feedBloc.onRemoveReaction(
-                          kind: 'like',
-                          activity: activity,
-                          reaction: ownReactions!['like']![0],
-                          feedGroup: feedGroup,
-                        );
-                      } else {
-                        context.feedBloc.onAddReaction(
-                          kind: 'like',
-                          activity: activity,
-                          feedGroup: feedGroup
-                        );
-                      }
-                    },
-                    icon: isLikedByUser
-                      ? const Icon(Icons.favorite_rounded)
-                      : const Icon(Icons.favorite_outline),
-                  ),
-                  if (reactionCounts?['like'] != null)
-                    Text(
-                      '${reactionCounts?['like']}',
-                    )
-                ],
+          Row(
+            children: [
+              IconButton(
+                iconSize:16,
+                onPressed: () {
+                  if (isLikedByUser) {
+                    context.feedBloc.onRemoveReaction(
+                      kind: 'like',
+                      activity: activity,
+                      reaction: ownReactions!['like']![0],
+                      feedGroup: feedGroup,
+                    );
+                  } else {
+                    context.feedBloc.onAddReaction(
+                      kind: 'like',
+                      activity: activity,
+                      feedGroup: feedGroup
+                    );
+                  }
+                },
+                icon: isLikedByUser
+                  ? const Icon(Icons.favorite_rounded)
+                  : const Icon(Icons.favorite_outline),
               ),
-          )
+              if (reactionCounts?['like'] != null)
+                Text(
+                  '${reactionCounts?['like']}',
+                )
+            ],
+          ),
         ]
       )
     );

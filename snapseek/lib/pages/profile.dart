@@ -203,10 +203,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   radius: 60, // Increased radius for a larger profile image
                   backgroundImage: profileImageUrl.isNotEmpty
                       ? NetworkImage(profileImageUrl)
-                      : AssetImage('lib/images/default_avatar.jpeg'),
-                  child: profileImageUrl.isEmpty
-                      ? const Icon(Icons.person, size: 60)
-                      : null,
+                      : const AssetImage('lib/images/default_avatar.jpeg'),
                 ),
                 const SizedBox(width: 24),
                 Expanded(
