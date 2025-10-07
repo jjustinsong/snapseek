@@ -16,23 +16,27 @@ CORS(app) # Enable CORS for all domains
 cred = credentials.Certificate('/Users/justinsong/snapseek/snapseek/lib/snapseek-cf1e8-firebase-adminsdk-i2zxh-c41f671a21.json')
 firebase_admin.initialize_app(cred)
 
+STREAM_API_KEY = os.environ["STREAM_API_KEY"]
+STREAM_API_SECRET = os.environ["STREAM_API_SECRET"]
+STREAM_APP_ID = os.environ["STREAM_APP_ID"]
+FIREBASE_API_KEY = os.environ["FIREBASE_API_KEY"]
+FIREBASE_APP_ID = os.environ["FIREBASE_APP_ID"]
+FIREBASE_SENDER_ID = os.environ["FIREBASE_SENDER_ID"]
+
 firebase_config = {
-    "apiKey": "AIzaSyA6FIjy5DqtS5EPZwuS9PsFNcXv47PKk6k",
+    "apiKey": FIREBASE_API_KEY,
     "authDomain": "snapseek-cf1e8.firebaseapp.com",
     "storageBucket": "snapseek-cf1e8.appspot.com",
     "projectId": "snapseek-cf1e8",
-    "appId": "1:119430690777:android:2fb583200eabd550e64bc8",
-    "messagingSenderId": "119430690777",
+    "appId": FIREBASE_APP_ID,
+    "messagingSenderId": FIREBASE_SENDER_ID,
     "databaseURL": "https://snapseek-cf1e8.firebaseio.com",
 }
 
 firebase = pyrebase.initialize_app(firebase_config)
 pyrebase_auth = firebase.auth()
 
-stream_api_key = 'wknqxgxtxyyu'
-stream_api_secret = 'ads6dtvydvjhptjaapujkva8sytgp9npbgnpd2r2na8n99yhkt8m6gsruhdgqjua'
-stream_app_id = '1318996'
-client = connect(stream_api_key, stream_api_secret, stream_app_id)
+client = connect(STREAM_API_KEY, STREAM_API_SECRET, STREAM_APP_ID)
 
 # Define the upload folder path (replace with Firebase later)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploaded_photos')
@@ -111,3 +115,4 @@ def search_images():
 if __name__ == '__main__':
     app.run(debug=True)
     
+
